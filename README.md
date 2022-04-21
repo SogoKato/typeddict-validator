@@ -13,11 +13,15 @@ Currently supported types are generic types and Union (including Optional).
 
 * Python 3.10 or higher
 
-## Usage
+## Installation
+
+https://pypi.org/project/typeddict-validator/
 
 ```sh
-docker run -it --rm --mount source=$(pwd),target=/app,type=bind -w /app python:latest python3
+pip install typeddict-validator
 ```
+
+## Usage
 
 ```python
 >>> from typing import TypedDict
