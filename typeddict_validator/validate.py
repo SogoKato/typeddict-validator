@@ -13,7 +13,9 @@ from typing import (
 T = TypeVar("T")
 
 
-def validate_typeddict(d: dict[str, Any], t: Type[T], *, silent: bool = False) -> TypeGuard[T]:
+def validate_typeddict(
+    d: dict[str, Any], t: Type[T], *, silent: bool = False
+) -> TypeGuard[T]:
     """Recursively validates whether the dict object matches given TypedDict.
 
     This supports generic types and Union (including Optional).

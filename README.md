@@ -21,7 +21,7 @@ docker run -it --rm --mount source=$(pwd),target=/app,type=bind -w /app python:l
 
 ```python
 >>> from typing import TypedDict
->>> from validate import validate_typeddict
+>>> from typeddict_validator import validate_typeddict
 >>>
 >>> PersonDict = TypedDict("PersonDict", {"name": str, "age": int, "interests": list[str]})
 >>>
@@ -47,9 +47,9 @@ By default, it will raise an error when the dict object does not match.
 ```
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-  File "/app/validate/validate.py", line 37, in validate_typeddict
+  File "/app/typeddict_validator/validate.py", line 37, in validate_typeddict
     raise DictMissingKeyException(key=k)
-validate.validate.DictMissingKeyException
+typeddict_validator.validate.DictMissingKeyException
 ```
 
 You can use `silent=True` option not to raise an error.
@@ -63,10 +63,10 @@ You can use `silent=True` option not to raise an error.
 It's not a PersonDict!!
 ```
 
-See [validate/validate_test.py](validate/validate_test.py) for more examples.
+See [typeddict_validator/validate_test.py](typeddict_validator/validate_test.py) for more examples.
 
 ## Tests
 
 ```sh
-docker run --mount source=$(pwd),target=/app,type=bind python:latest python3 -m unittest -v /app/validate/validate_test.py
+docker run --mount source=$(pwd),target=/app,type=bind python:latest python3 -m unittest -v /app/typeddict_validator/validate_test.py
 ```

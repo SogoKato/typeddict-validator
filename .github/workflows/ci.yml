@@ -17,4 +17,4 @@ jobs:
         with:
           python-version: 3.10.4
       - name: Test with unittest
-        run: python3 -m unittest -v ./validate/validate_test.py
+        run: python3 -m unittest -v ./typeddict_validator/validate_test.py
