@@ -1,15 +1,17 @@
 # typeddict-validator
 Validates Python's TypedDict
 
-## Requirements
-
-* Python 3.10 or higher
+[日本語の説明はこちら / Description in Japanese](https://qiita.com/SogoK/items/a29b339e7c4b6c7b8f17)
 
 ## About
 
 This is a utility to validate a dict object using TypedDict. It recursively checks whether the dict has necessary keys and the values has appropriate type. It will be useful when you deserialize the json or yaml data, such as an API request or any file.
 
 Currently supported types are generic types and Union (including Optional).
+
+## Requirements
+
+* Python 3.10 or higher
 
 ## Usage
 
