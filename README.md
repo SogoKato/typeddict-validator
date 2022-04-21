@@ -13,6 +13,10 @@ Currently supported types are generic types and Union (including Optional).
 
 ## Usage
 
+```sh
+docker run -it --rm --mount source=$(pwd),target=/app,type=bind -w /app python:latest python3
+```
+
 ```python
 >>> from typing import TypedDict
 >>> from validate import validate_typeddict
@@ -22,18 +26,20 @@ Currently supported types are generic types and Union (including Optional).
 >>> person = {"name": "Taro Yamada", "age": 30, "interests": ["programming", "painting"]}
 >>>
 >>> if validate_typeddict(person, PersonDict):
-...     print("It's PersonDict!")
+...     print("It's a PersonDict!")
 ```
 
 ```
-It's PersonDict!
+It's a PersonDict!
 ```
+
+By default, it will raise an error when the dict object does not match.
 
 ```python
 >>> robot = {"name": "Doraemon"}
 >>>
 >>> if validate_typeddict(robot, PersonDict):
-...     print("It's PersonDict!")
+...     print("It's a PersonDict!")
 ```
 
 ```
@@ -42,6 +48,17 @@ Traceback (most recent call last):
   File "/app/validate/validate.py", line 37, in validate_typeddict
     raise DictMissingKeyException(key=k)
 validate.validate.DictMissingKeyException
+```
+
+You can use `silent=True` option not to raise an error.
+
+```python
+>>> if not validate_typeddict(robot, PersonDict, silent=True):
+...     print("It's not a PersonDict!!")
+```
+
+```
+It's not a PersonDict!!
 ```
 
 See [validate/validate_test.py](validate/validate_test.py) for more examples.

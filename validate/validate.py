@@ -13,7 +13,7 @@ from typing import (
 T = TypeVar("T")
 
 
-def validate_typeddict(d: dict[str, Any], t: Type[T]) -> TypeGuard[T]:
+def validate_typeddict(d: dict[str, Any], t: Type[T], *, silent: bool = False) -> TypeGuard[T]:
     """Recursively validates whether the dict object matches given TypedDict.
 
     This supports generic types and Union (including Optional).
@@ -21,6 +21,7 @@ def validate_typeddict(d: dict[str, Any], t: Type[T]) -> TypeGuard[T]:
     Args:
         d (dict[str, Any]): a dict object to be validated.
         t (Type[TypedDict]): a type object of TypedDict.
+        silent (bool): will return False instead of raising DictMissingKeyException or DictValueTypeMismatchException when True.
 
     Returns:
         bool: a TypeGuard that annotates the dict obeject matches given TypedDict.
@@ -32,10 +33,16 @@ def validate_typeddict(d: dict[str, Any], t: Type[T]) -> TypeGuard[T]:
     """
     if not is_typeddict(t):
         raise ValueError("t must be a type object of TypedDict.")
-    for k, vt in t.__annotations__.items():
-        if k not in d.keys():
-            raise DictMissingKeyException(key=k)
-        _validate_value(k=k, v=d[k], expected=vt)
+    try:
+        for k, vt in t.__annotations__.items():
+            if k not in d.keys():
+                raise DictMissingKeyException(key=k)
+            _validate_value(k=k, v=d[k], expected=vt)
+    except (DictMissingKeyException, DictValueTypeMismatchException) as e:
+        if silent:
+            return False
+        else:
+            raise e
     return True
 
 

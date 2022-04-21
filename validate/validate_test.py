@@ -252,10 +252,25 @@ class TestValidateTypedDict(unittest.TestCase):
     def test_success(self):
         for success_params in self.success_params_list:
             with self.subTest():
-                validate_typeddict(*success_params)
+                is_valid = validate_typeddict(*success_params)
+                self.assertEqual(is_valid, True)
+
+    def test_success_with_silent(self):
+        for success_params in self.success_params_list:
+            with self.subTest():
+                is_valid = validate_typeddict(*success_params, silent=True)
+                self.assertEqual(is_valid, True)
 
     def test_failure(self):
         for failure_params, error in self.failure_params_list:
             with self.subTest():
                 with self.assertRaises(error):
                     validate_typeddict(*failure_params)
+
+    def test_failure_with_silent(self):
+        for failure_params, error in self.failure_params_list:
+            with self.subTest():
+                if error == ValueError:
+                    continue
+                is_valid = validate_typeddict(*failure_params, silent=True)
+                self.assertEqual(is_valid, False)
