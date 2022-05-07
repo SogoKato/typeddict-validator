@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "typeddict-validator"
-version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
+version = "0.0.0"
+description = "Validates Python's TypedDict"
+authors = ["Sogo Kato <sogokato@outlook.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
@@ -12,5 +12,20 @@ python = "^3.10"
 black = "^22.3.0"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "typeddict-validator"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+]
+dependencies = []
+dynamic = ["version", "readme"]
+
+[tool.setuptools.dynamic]
+version = {attr = "typeddict_validator.__version__"}
+readme = {file = ["README.rst"]}
