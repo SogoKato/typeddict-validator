@@ -131,7 +131,11 @@ class DictValueTypeMismatchException(Exception):
         self.key = key
         self.expected = expected
         self.actual = actual
-        self.expected_type_name = expected.__class__.__name__
+        self.expected_type_name = (
+            expected.__name__
+            if expected.__class__.__name__ == "type"
+            else expected.__class__.__name__
+        )
         if expected == Union:
             self.expected_type_name = "one of " + ", ".join(
                 [t.__class__.__name__ for t in expected.__args__]
