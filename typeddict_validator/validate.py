@@ -6,6 +6,7 @@ from typing import (
     Union,
     get_args,
     get_origin,
+    get_type_hints,
     is_typeddict,
 )
 
@@ -36,6 +37,9 @@ def validate_typeddict(
     if not is_typeddict(t):
         raise ValueError("t must be a type object of TypedDict.")
     try:
+        hints = get_type_hints(t, globalns=globals(), localns=locals())
+        t.__annotations__.update(hints)
+
         for k, vt in t.__annotations__.items():
             if k not in d.keys():
                 raise DictMissingKeyException(key=k)
