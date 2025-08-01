@@ -1,4 +1,4 @@
-from typing import Any, Optional, Type, TypedDict, Union
+from typing import Any, Literal, Optional, Type, TypedDict, Union
 import unittest
 
 from .validate import (
@@ -31,6 +31,10 @@ class HasDictValueTypedDict(TypedDict):
     d_union: dict[str, Union[str, int]]
     d_optional: dict[str, Optional[str]]
     d_any: dict[str, Any]
+
+
+class HasLiteralValueTypedDict(TypedDict):
+    l: Literal["Hello", "World"]
 
 
 class HasTypedDictValueTypedDict(TypedDict):
@@ -104,6 +108,14 @@ class TestValidateTypedDict(unittest.TestCase):
         (
             {"u": 0, "o": None, "o_list": None, "o_dict": None},
             HasUnionValueTypedDict,
+        ),
+        (
+            {"l": "Hello"},
+            HasLiteralValueTypedDict,
+        ),
+        (
+            {"l": "World"},
+            HasLiteralValueTypedDict,
         ),
         (
             {},
@@ -261,6 +273,27 @@ class TestValidateTypedDict(unittest.TestCase):
                     "o_dict": {"s": 0},  # o_dict is invalid
                 },
                 HasUnionValueTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
+        (
+            (
+                {"l": "asdf"},
+                HasLiteralValueTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
+        (
+            (
+                {"l": "hello"},
+                HasLiteralValueTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
+        (
+            (
+                {"l": 5},
+                HasLiteralValueTypedDict,
             ),
             DictValueTypeMismatchException,
         ),

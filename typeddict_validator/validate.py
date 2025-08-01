@@ -1,5 +1,7 @@
 from typing import (
     Any,
+    NotRequired,
+    Literal,
     Type,
     TypeGuard,
     TypeVar,
@@ -86,6 +88,9 @@ def _validate_value(k: str, v: Any, expected: Any):
             _raise_if_mismatch(k=k, v=v_, expected=expected, actual=v)
     elif is_typeddict(expected):
         validate_typeddict(v, expected)
+    elif origin_type_expected is Literal:
+        if v not in get_args(expected):
+            raise DictValueTypeMismatchException(key=k, expected=expected, actual=v)
     elif type(v) != expected:
         raise_()
 
