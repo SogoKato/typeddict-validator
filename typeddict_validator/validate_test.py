@@ -7,6 +7,11 @@ from .validate import (
     validate_typeddict,
 )
 
+try:
+    from typing import NotRequired
+except ImportError:
+    from typing_extensions import NotRequired
+
 
 class BasicTypedDict(TypedDict):
     s: str
@@ -37,6 +42,10 @@ class HasUnionValueTypedDict(TypedDict):
     o: Optional[str]
     o_list: Optional[list[str]]
     o_dict: Optional[dict[str, str]]
+
+
+class HasNotRequiredTypedDict(TypedDict):
+    s: NotRequired[str]
 
 
 class TestValidateTypedDict(unittest.TestCase):
@@ -95,6 +104,14 @@ class TestValidateTypedDict(unittest.TestCase):
         (
             {"u": 0, "o": None, "o_list": None, "o_dict": None},
             HasUnionValueTypedDict,
+        ),
+        (
+            {},
+            HasNotRequiredTypedDict,
+        ),
+        (
+            {"s": "a"},
+            HasNotRequiredTypedDict,
         ),
     ]
 
@@ -244,6 +261,13 @@ class TestValidateTypedDict(unittest.TestCase):
                     "o_dict": {"s": 0},  # o_dict is invalid
                 },
                 HasUnionValueTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
+        (
+            (
+                {"s": 0},
+                HasNotRequiredTypedDict,
             ),
             DictValueTypeMismatchException,
         ),
