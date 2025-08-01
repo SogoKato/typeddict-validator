@@ -11,6 +11,11 @@ from typing import (
     is_typeddict,
 )
 
+try:
+    from typing import NotRequired
+except ImportError:
+    from typing_extensions import NotRequired
+
 
 T = TypeVar("T")
 
@@ -42,8 +47,14 @@ def validate_typeddict(
         t.__annotations__.update(hints)
 
         for k, vt in t.__annotations__.items():
-            if k not in d.keys():
+            origin = get_origin(vt)
+            if k not in d.keys() and origin is NotRequired:
+                continue
+            elif k not in d.keys():
                 raise DictMissingKeyException(key=k)
+            elif origin is NotRequired:
+                vt = get_args(vt)[0]
+
             _validate_value(k=k, v=d[k], expected=vt)
     except (DictMissingKeyException, DictValueTypeMismatchException) as e:
         if silent:
