@@ -86,15 +86,20 @@ def _raise_if_mismatch(k: str, v: Any, expected: Any, actual: Any):
     if type(v) in args:
         return
     err_count = 0
+    error = None
     for arg in args:
         try:
             _validate_value(k=k, v=v, expected=arg)
-        except DictValueTypeMismatchException:
+        except (DictValueTypeMismatchException, DictMissingKeyException) as e:
             err_count += 1
-    if err_count < len(args):
+            error = error or e
+    if get_origin(expected) is Union and err_count < len(args):
+        # OK if at least one of args did not raise error.
+        return
+    elif error is None:
         # OK if any of args did not raise error.
         return
-    raise DictValueTypeMismatchException(key=k, expected=expected, actual=actual)
+    raise error
 
 
 class DictMissingKeyException(Exception):
