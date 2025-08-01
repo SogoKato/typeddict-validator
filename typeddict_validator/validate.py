@@ -1,6 +1,5 @@
 from typing import (
     Any,
-    NotRequired,
     Literal,
     Type,
     TypeGuard,
