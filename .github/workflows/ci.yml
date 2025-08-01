@@ -19,5 +19,14 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install poetry
+        run: |
+          pipx install poetry
+      - name: Poetry Version
+        run: |
+          poetry --version
+      - name: Poetry Install Dependencies
+        run: |
+          poetry install --no-interaction
       - name: Test with unittest
         run: python3 -m unittest -v ./typeddict_validator/validate_test.py
