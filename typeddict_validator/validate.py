@@ -1,6 +1,5 @@
 from typing import (
     Any,
-    NotRequired,
     Type,
     TypeGuard,
     TypeVar,
@@ -9,6 +8,11 @@ from typing import (
     get_origin,
     is_typeddict,
 )
+
+try:
+    from typing import NotRequired
+except ImportError:
+    from typing_extensions import NotRequired
 
 
 T = TypeVar("T")
