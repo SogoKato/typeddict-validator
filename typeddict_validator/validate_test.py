@@ -1,4 +1,4 @@
-from typing import Any, Optional, Type, TypedDict, Union
+from typing import Any, Literal, Optional, Type, TypedDict, Union
 import unittest
 
 from .validate import (
@@ -14,6 +14,14 @@ class BasicTypedDict(TypedDict):
     b: bool
 
 
+class HasForwardRefTypedDict(TypedDict):
+    d: "ForwardDict"
+
+
+class ForwardDict(TypedDict):
+    s: str
+
+
 class HasListValueTypedDict(TypedDict):
     l: list[str]
     l_union: list[Union[str, int]]
@@ -26,6 +34,10 @@ class HasDictValueTypedDict(TypedDict):
     d_union: dict[str, Union[str, int]]
     d_optional: dict[str, Optional[str]]
     d_any: dict[str, Any]
+
+
+class HasLiteralValueTypedDict(TypedDict):
+    l: Literal["Hello", "World"]
 
 
 class HasTypedDictValueTypedDict(TypedDict):
@@ -47,6 +59,10 @@ class TestValidateTypedDict(unittest.TestCase):
         (
             {"s": "a", "i": 0, "b": False},
             BasicTypedDict,
+        ),
+        (
+            {"d": {"s": "a"}},
+            HasForwardRefTypedDict,
         ),
         (
             {
@@ -96,6 +112,14 @@ class TestValidateTypedDict(unittest.TestCase):
             {"u": 0, "o": None, "o_list": None, "o_dict": None},
             HasUnionValueTypedDict,
         ),
+        (
+            {"l": "Hello"},
+            HasLiteralValueTypedDict,
+        ),
+        (
+            {"l": "World"},
+            HasLiteralValueTypedDict,
+        ),
     ]
 
     failure_params_list: list[tuple[Param, Type[Exception]]] = [
@@ -117,6 +141,13 @@ class TestValidateTypedDict(unittest.TestCase):
             (
                 {"s": "a", "i": 0, "b": "False"},  # b is invalid
                 BasicTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
+        (
+            (
+                {"d": {"s": 1}},
+                HasForwardRefTypedDict
             ),
             DictValueTypeMismatchException,
         ),
@@ -244,6 +275,27 @@ class TestValidateTypedDict(unittest.TestCase):
                     "o_dict": {"s": 0},  # o_dict is invalid
                 },
                 HasUnionValueTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
+        (
+            (
+                {"l": "asdf"},
+                HasLiteralValueTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
+        (
+            (
+                {"l": "hello"},
+                HasLiteralValueTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
+        (
+            (
+                {"l": 5},
+                HasLiteralValueTypedDict,
             ),
             DictValueTypeMismatchException,
         ),

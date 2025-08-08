@@ -1,11 +1,13 @@
 from typing import (
     Any,
+    Literal,
     Type,
     TypeGuard,
     TypeVar,
     Union,
     get_args,
     get_origin,
+    get_type_hints,
     is_typeddict,
 )
 
@@ -36,6 +38,9 @@ def validate_typeddict(
     if not is_typeddict(t):
         raise ValueError("t must be a type object of TypedDict.")
     try:
+        hints = get_type_hints(t, globalns=globals(), localns=locals())
+        t.__annotations__.update(hints)
+
         for k, vt in t.__annotations__.items():
             if k not in d.keys():
                 raise DictMissingKeyException(key=k)
@@ -75,6 +80,9 @@ def _validate_value(k: str, v: Any, expected: Any):
             _raise_if_mismatch(k=k, v=v_, expected=expected, actual=v)
     elif is_typeddict(expected):
         validate_typeddict(v, expected)
+    elif origin_type_expected is Literal:
+        if v not in get_args(expected):
+            raise DictValueTypeMismatchException(key=k, expected=expected, actual=v)
     elif type(v) != expected:
         raise_()
 
