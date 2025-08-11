@@ -7,7 +7,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-typing_extensions = { version = "*", markers = "python_version < '3.11'" }
+typing_extensions = { version = "^4.0", python = "<3.11" }
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.3.0"
