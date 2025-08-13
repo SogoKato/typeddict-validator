@@ -310,18 +310,18 @@ class TestValidateTypedDict(unittest.TestCase):
         for success_params in self.success_params_list:
             with self.subTest():
                 is_valid = validate_typeddict(*success_params)
-                self.assertEqual(is_valid, True)
+                self.assertEqual(is_valid, True, success_params)
 
     def test_success_with_silent(self):
         for success_params in self.success_params_list:
             with self.subTest():
                 is_valid = validate_typeddict(*success_params, silent=True)
-                self.assertEqual(is_valid, True)
+                self.assertEqual(is_valid, True, success_params)
 
     def test_failure(self):
         for failure_params, error in self.failure_params_list:
             with self.subTest():
-                with self.assertRaises(error):
+                with self.assertRaises(error, msg=failure_params):
                     validate_typeddict(*failure_params)
 
     def test_failure_with_silent(self):
@@ -330,4 +330,4 @@ class TestValidateTypedDict(unittest.TestCase):
                 if error == ValueError:
                     continue
                 is_valid = validate_typeddict(*failure_params, silent=True)
-                self.assertEqual(is_valid, False)
+                self.assertEqual(is_valid, False, failure_params)
