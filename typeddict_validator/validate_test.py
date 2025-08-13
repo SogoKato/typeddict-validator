@@ -52,6 +52,7 @@ class HasNotRequiredTypedDict(TypedDict):
     s: NotRequired[str]
 
 
+
 class TestValidateTypedDict(unittest.TestCase):
 
     Param = tuple[dict[str, Any], Any]
