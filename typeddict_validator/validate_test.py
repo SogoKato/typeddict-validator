@@ -51,6 +51,21 @@ class HasUnionValueTypedDict(TypedDict):
     o_dict: Optional[dict[str, str]]
 
 
+class PersonTypedDict(TypedDict):
+    name: str
+    age: int
+
+
+class CompanyTypedDict(TypedDict):
+    name: str
+    employees: int
+
+
+class HasUnionWithTypedDictsTypedDict(TypedDict):
+    entity: Union[PersonTypedDict, CompanyTypedDict]
+    backup: Optional[Union[PersonTypedDict, CompanyTypedDict]]
+
+
 class TestValidateTypedDict(unittest.TestCase):
 
     Param = tuple[dict[str, Any], Any]
@@ -119,6 +134,19 @@ class TestValidateTypedDict(unittest.TestCase):
         (
             {"l": "World"},
             HasLiteralValueTypedDict,
+        ),
+        # Union with TypedDicts tests
+        (
+            {"entity": {"name": "John", "age": 30}, "backup": None},
+            HasUnionWithTypedDictsTypedDict,
+        ),
+        (
+            {"entity": {"name": "ACME Corp", "employees": 100}, "backup": None},
+            HasUnionWithTypedDictsTypedDict,
+        ),
+        (
+            {"entity": {"name": "John", "age": 30}, "backup": {"name": "ACME Corp", "employees": 100}},
+            HasUnionWithTypedDictsTypedDict,
         ),
     ]
 
@@ -298,6 +326,42 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasLiteralValueTypedDict,
             ),
             DictValueTypeMismatchException,
+        ),
+        # Union with TypedDicts failure tests
+        (
+            (
+                {"entity": {"name": "John"}, "backup": None},  # missing age field
+                HasUnionWithTypedDictsTypedDict,
+            ),
+            DictMissingKeyException,
+        ),
+        (
+            (
+                {"entity": {"name": "John", "age": "thirty"}, "backup": None},  # wrong type for age
+                HasUnionWithTypedDictsTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
+        (
+            (
+                {"entity": {"name": 123, "age": 30}, "backup": None},  # wrong type for name (should be str)
+                HasUnionWithTypedDictsTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
+        (
+            (
+                {"entity": {"name": "ACME Corp", "employees": "many"}, "backup": None},  # wrong type for employees
+                HasUnionWithTypedDictsTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
+        (
+            (
+                {"entity": {"invalid": "data"}, "backup": None},  # doesn't match either TypedDict
+                HasUnionWithTypedDictsTypedDict,
+            ),
+            DictMissingKeyException,
         ),
     ]
 
