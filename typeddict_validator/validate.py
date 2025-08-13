@@ -11,8 +11,32 @@ from typing import (
     is_typeddict,
 )
 
+try:
+    from typing import NotRequired
+except ImportError:
+    from typing_extensions import NotRequired
+
 
 T = TypeVar("T")
+
+
+def _is_not_required(vt):
+    """Check if a type annotation is NotRequired"""
+    # Method 1: Direct origin check
+    origin = get_origin(vt)
+    if origin is NotRequired:
+        return True
+    
+    # Method 2: Check __origin__ attribute directly
+    if hasattr(vt, '__origin__') and vt.__origin__ is NotRequired:
+        return True
+    
+    # Method 3: Check type representation (fallback for edge cases)
+    type_str = str(vt)
+    if type_str.startswith('typing.NotRequired[') or type_str.startswith('typing_extensions.NotRequired['):
+        return True
+    
+    return False
 
 
 def validate_typeddict(
@@ -38,12 +62,24 @@ def validate_typeddict(
     if not is_typeddict(t):
         raise ValueError("t must be a type object of TypedDict.")
     try:
+        # Get optional keys from TypedDict metadata  
+        optional_keys = getattr(t, '__optional_keys__', set())
         hints = get_type_hints(t, globalns=globals(), localns=locals())
         t.__annotations__.update(hints)
-
         for k, vt in t.__annotations__.items():
-            if k not in d.keys():
+            # Check if this is a NotRequired field using both methods
+            is_not_required_by_annotation = _is_not_required(vt)
+            is_not_required_by_metadata = k in optional_keys
+            is_not_required = is_not_required_by_annotation or is_not_required_by_metadata
+            
+            if k not in d.keys() and is_not_required:
+                continue
+            elif k not in d.keys():
                 raise DictMissingKeyException(key=k)
+            elif is_not_required_by_annotation:
+                # Only extract inner type if we detected NotRequired in the annotation
+                vt = get_args(vt)[0]
+
             _validate_value(k=k, v=d[k], expected=vt)
     except (DictMissingKeyException, DictValueTypeMismatchException) as e:
         if silent:
