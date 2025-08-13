@@ -19,6 +19,14 @@ class BasicTypedDict(TypedDict):
     b: bool
 
 
+class HasForwardRefTypedDict(TypedDict):
+    d: "ForwardDict"
+
+
+class ForwardDict(TypedDict):
+    s: str
+
+
 class HasListValueTypedDict(TypedDict):
     l: list[str]
     l_union: list[Union[str, int]]
@@ -61,6 +69,10 @@ class TestValidateTypedDict(unittest.TestCase):
         (
             {"s": "a", "i": 0, "b": False},
             BasicTypedDict,
+        ),
+        (
+            {"d": {"s": "a"}},
+            HasForwardRefTypedDict,
         ),
         (
             {
@@ -147,6 +159,13 @@ class TestValidateTypedDict(unittest.TestCase):
             (
                 {"s": "a", "i": 0, "b": "False"},  # b is invalid
                 BasicTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
+        (
+            (
+                {"d": {"s": 1}},
+                HasForwardRefTypedDict
             ),
             DictValueTypeMismatchException,
         ),

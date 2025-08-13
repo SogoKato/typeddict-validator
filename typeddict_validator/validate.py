@@ -7,6 +7,7 @@ from typing import (
     Union,
     get_args,
     get_origin,
+    get_type_hints,
     is_typeddict,
 )
 
@@ -63,7 +64,8 @@ def validate_typeddict(
     try:
         # Get optional keys from TypedDict metadata  
         optional_keys = getattr(t, '__optional_keys__', set())
-        
+        hints = get_type_hints(t, globalns=globals(), localns=locals())
+        t.__annotations__.update(hints)
         for k, vt in t.__annotations__.items():
             # Check if this is a NotRequired field using both methods
             is_not_required_by_annotation = _is_not_required(vt)
