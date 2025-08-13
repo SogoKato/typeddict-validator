@@ -7,6 +7,11 @@ from .validate import (
     validate_typeddict,
 )
 
+try:
+    from typing import NotRequired
+except ImportError:
+    from typing_extensions import NotRequired
+
 
 class BasicTypedDict(TypedDict):
     s: str
@@ -64,6 +69,10 @@ class CompanyTypedDict(TypedDict):
 class HasUnionWithTypedDictsTypedDict(TypedDict):
     entity: Union[PersonTypedDict, CompanyTypedDict]
     backup: Optional[Union[PersonTypedDict, CompanyTypedDict]]
+
+
+class HasNotRequiredTypedDict(TypedDict):
+    s: NotRequired[str]
 
 
 class TestValidateTypedDict(unittest.TestCase):
@@ -147,6 +156,14 @@ class TestValidateTypedDict(unittest.TestCase):
         (
             {"entity": {"name": "John", "age": 30}, "backup": {"name": "ACME Corp", "employees": 100}},
             HasUnionWithTypedDictsTypedDict,
+        ),
+        (
+            {},
+            HasNotRequiredTypedDict,
+        ),
+        (
+            {"s": "a"},
+            HasNotRequiredTypedDict,
         ),
     ]
 
@@ -363,24 +380,31 @@ class TestValidateTypedDict(unittest.TestCase):
             ),
             DictMissingKeyException,
         ),
+        (
+            (
+                {"s": 0},
+                HasNotRequiredTypedDict,
+            ),
+            DictValueTypeMismatchException,
+        ),
     ]
 
     def test_success(self):
         for success_params in self.success_params_list:
             with self.subTest():
                 is_valid = validate_typeddict(*success_params)
-                self.assertEqual(is_valid, True)
+                self.assertEqual(is_valid, True, success_params)
 
     def test_success_with_silent(self):
         for success_params in self.success_params_list:
             with self.subTest():
                 is_valid = validate_typeddict(*success_params, silent=True)
-                self.assertEqual(is_valid, True)
+                self.assertEqual(is_valid, True, success_params)
 
     def test_failure(self):
         for failure_params, error in self.failure_params_list:
             with self.subTest():
-                with self.assertRaises(error):
+                with self.assertRaises(error, msg=failure_params):
                     validate_typeddict(*failure_params)
 
     def test_failure_with_silent(self):
@@ -389,4 +413,4 @@ class TestValidateTypedDict(unittest.TestCase):
                 if error == ValueError:
                     continue
                 is_valid = validate_typeddict(*failure_params, silent=True)
-                self.assertEqual(is_valid, False)
+                self.assertEqual(is_valid, False, failure_params)
