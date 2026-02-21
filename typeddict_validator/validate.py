@@ -26,22 +26,20 @@ def _is_not_required(vt):
     origin = get_origin(vt)
     if origin is NotRequired:
         return True
-    
+
     # Method 2: Check __origin__ attribute directly
-    if hasattr(vt, '__origin__') and vt.__origin__ is NotRequired:
+    if hasattr(vt, "__origin__") and vt.__origin__ is NotRequired:
         return True
-    
+
     # Method 3: Check type representation (fallback for edge cases)
     type_str = str(vt)
     if type_str.startswith('typing.NotRequired[') or type_str.startswith('typing_extensions.NotRequired['):
         return True
-    
+
     return False
 
 
-def validate_typeddict(
-    d: dict[str, Any], t: Type[T], *, silent: bool = False
-) -> TypeGuard[T]:
+def validate_typeddict(d: dict[str, Any], t: Type[T], *, silent: bool = False) -> TypeGuard[T]:
     """Recursively validates whether the dict object matches given TypedDict.
 
     This supports generic types and Union (including Optional).
@@ -62,8 +60,8 @@ def validate_typeddict(
     if not is_typeddict(t):
         raise ValueError("t must be a type object of TypedDict.")
     try:
-        # Get optional keys from TypedDict metadata  
-        optional_keys = getattr(t, '__optional_keys__', set())
+        # Get optional keys from TypedDict metadata
+        optional_keys = getattr(t, "__optional_keys__", set())
         hints = get_type_hints(t, globalns=globals(), localns=locals())
         t.__annotations__.update(hints)
         for k, vt in t.__annotations__.items():
@@ -71,12 +69,12 @@ def validate_typeddict(
             is_not_required_by_annotation = _is_not_required(vt)
             is_not_required_by_metadata = k in optional_keys
             is_not_required = is_not_required_by_annotation or is_not_required_by_metadata
-            
+
             if k not in d.keys() and is_not_required:
                 continue
-            elif k not in d.keys():
+            if k not in d.keys():
                 raise DictMissingKeyException(key=k)
-            elif is_not_required_by_annotation:
+            if is_not_required_by_annotation:
                 # Only extract inner type if we detected NotRequired in the annotation
                 vt = get_args(vt)[0]
 
@@ -84,8 +82,7 @@ def validate_typeddict(
     except (DictMissingKeyException, DictValueTypeMismatchException) as e:
         if silent:
             return False
-        else:
-            raise e
+        raise e
     return True
 
 
@@ -145,7 +142,7 @@ def _raise_if_mismatch(k: str, v: Any, expected: Any, actual: Any):
     if get_origin(expected) is Union and err_count < len(args):
         # OK if at least one of args did not raise error.
         return
-    elif error is None:
+    if error is None:
         # OK if any of args did not raise error.
         return
     # If we have a type mismatch error, prefer it over missing key errors
@@ -198,7 +195,5 @@ class DictValueTypeMismatchException(Exception):
                 [t.__class__.__name__ for t in expected.__args__]
             )
         self.actual_type_name = (
-            actual.__name__
-            if actual.__class__.__name__ == "type"
-            else actual.__class__.__name__
+            actual.__name__ if actual.__class__.__name__ == "type" else actual.__class__.__name__
         )
