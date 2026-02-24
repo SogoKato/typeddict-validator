@@ -1,5 +1,5 @@
-from typing import Any, Literal, Optional, Type, TypedDict, Union
 import unittest
+from typing import Any, Literal, Optional, Type, TypedDict, Union
 
 from .validate import (
     DictMissingKeyException,
@@ -76,7 +76,6 @@ class HasNotRequiredTypedDict(TypedDict):
 
 
 class TestValidateTypedDict(unittest.TestCase):
-
     Param = tuple[dict[str, Any], Any]
 
     success_params_list: list[Param] = [
@@ -190,10 +189,7 @@ class TestValidateTypedDict(unittest.TestCase):
             DictValueTypeMismatchException,
         ),
         (
-            (
-                {"d": {"s": 1}},
-                HasForwardRefTypedDict
-            ),
+            ({"d": {"s": 1}}, HasForwardRefTypedDict),
             DictValueTypeMismatchException,
         ),
         (
@@ -410,7 +406,7 @@ class TestValidateTypedDict(unittest.TestCase):
     def test_failure_with_silent(self):
         for failure_params, error in self.failure_params_list:
             with self.subTest():
-                if error == ValueError:
+                if error is ValueError:
                     continue
                 is_valid = validate_typeddict(*failure_params, silent=True)
                 self.assertEqual(is_valid, False, failure_params)

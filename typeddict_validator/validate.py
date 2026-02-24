@@ -21,7 +21,7 @@ T = TypeVar("T")
 
 
 def _is_not_required(vt):
-    """Check if a type annotation is NotRequired"""
+    """Check if a type annotation is NotRequired."""
     # Method 1: Direct origin check
     origin = get_origin(vt)
     if origin is NotRequired:
@@ -33,7 +33,7 @@ def _is_not_required(vt):
 
     # Method 3: Check type representation (fallback for edge cases)
     type_str = str(vt)
-    if type_str.startswith('typing.NotRequired[') or type_str.startswith('typing_extensions.NotRequired['):
+    if type_str.startswith("typing.NotRequired[") or type_str.startswith("typing_extensions.NotRequired["):
         return True
 
     return False
@@ -56,6 +56,7 @@ def validate_typeddict(d: dict[str, Any], t: Type[T], *, silent: bool = False) -
         DictMissingKeyException: raised when the dict object is missing any key defined in given TypedDict.
         DictValueTypeMismatchException: raised when any value of the dict object does not match definition of given TypedDict.
         ValueError: raised when argument t is not a type object of TypedDict.
+
     """
     if not is_typeddict(t):
         raise ValueError("t must be a type object of TypedDict.")
@@ -101,12 +102,12 @@ def _validate_value(k: str, v: Any, expected: Any):
     origin_type_expected = get_origin(expected)
     if origin_type_expected is Union:
         _raise_if_mismatch(k=k, v=v, expected=expected, actual=v)
-    elif origin_type_expected == list:
+    elif origin_type_expected is list:
         if not isinstance(v, list):
             raise_()
         for v_ in v:
             _raise_if_mismatch(k=k, v=v_, expected=expected, actual=v)
-    elif origin_type_expected == dict:
+    elif origin_type_expected is dict:
         if not isinstance(v, dict):
             raise_()
         for v_ in v.values():
@@ -116,7 +117,7 @@ def _validate_value(k: str, v: Any, expected: Any):
     elif origin_type_expected is Literal:
         if v not in get_args(expected):
             raise DictValueTypeMismatchException(key=k, expected=expected, actual=v)
-    elif type(v) != expected:
+    elif type(v) is not expected:
         raise_()
 
 
@@ -156,11 +157,18 @@ class DictMissingKeyException(Exception):
 
     Attributes:
         key (str): the name of missing key.
+
     """
 
     key: str
 
     def __init__(self, key: str) -> None:
+        """Initialize DictMissingKeyException with missing key.
+
+        Args:
+            key (str): the name of missing key.
+
+        """
         self.key = key
 
 
@@ -173,6 +181,7 @@ class DictValueTypeMismatchException(Exception):
         expected_type_name (str): the name(s) of type(s) of expected. It will be multiple when expected is Union or Optional.
         actual (Type): the type of value of key in dict.
         actual_type_name (str): the name of type of actual.
+
     """
 
     key: str
@@ -182,18 +191,20 @@ class DictValueTypeMismatchException(Exception):
     actual_type_name: str
 
     def __init__(self, key: str, expected: Type, actual: Type) -> None:
+        """Initialize DictValueTypeMismatchException with key, expected type and actual type.
+
+        Args:
+            key (str): the name of key that its value does not match definition.
+            expected (Type): the type of value of key defined in TypedDict.
+            actual (Type): the type of value of key in dict.
+
+        """
         self.key = key
         self.expected = expected
         self.actual = actual
         self.expected_type_name = (
-            expected.__name__
-            if expected.__class__.__name__ == "type"
-            else expected.__class__.__name__
+            expected.__name__ if expected.__class__.__name__ == "type" else expected.__class__.__name__
         )
         if expected == Union:
-            self.expected_type_name = "one of " + ", ".join(
-                [t.__class__.__name__ for t in expected.__args__]
-            )
-        self.actual_type_name = (
-            actual.__name__ if actual.__class__.__name__ == "type" else actual.__class__.__name__
-        )
+            self.expected_type_name = "one of " + ", ".join([t.__class__.__name__ for t in expected.__args__])
+        self.actual_type_name = actual.__name__ if actual.__class__.__name__ == "type" else actual.__class__.__name__
