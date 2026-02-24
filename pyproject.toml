@@ -10,7 +10,7 @@ python = "^3.10"
 typing_extensions = { version = "^4.0", python = "<3.11" }
 
 [tool.poetry.group.dev.dependencies]
-black = "^22.3.0"
+ruff = "^0.15.2"
 
 [build-system]
 requires = ["setuptools", "setuptools-scm"]
@@ -30,3 +30,32 @@ dynamic = ["version", "readme"]
 [tool.setuptools.dynamic]
 version = {attr = "typeddict_validator.__version__"}
 readme = {file = ["README.rst"]}
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "D",
+    "E",
+    "F",
+    "I",
+    "N",
+    "W",
+]
+ignore = [
+    "D100",
+    "D104",
+    "D203",
+    "D213",
+    "E501",
+    "E741",
+    "N818",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*_test.py" = [
+    "D101",
+    "D102",
+    "D107",
+]
