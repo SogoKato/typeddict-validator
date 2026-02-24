@@ -28,5 +28,9 @@ jobs:
       - name: Poetry Install Dependencies
         run: |
           poetry install --no-interaction
+      - name: Lint with ruff
+        run: poetry run ruff check .
+      - name: Check code formatting with ruff
+        run: poetry run ruff format --check .
       - name: Test with unittest
         run: poetry run python3 -m unittest -v ./typeddict_validator/validate_test.py
