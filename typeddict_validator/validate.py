@@ -1,15 +1,4 @@
-from typing import (
-    Any,
-    Literal,
-    Type,
-    TypeGuard,
-    TypeVar,
-    Union,
-    get_args,
-    get_origin,
-    get_type_hints,
-    is_typeddict,
-)
+from typing import Any, Literal, Type, TypeGuard, TypeVar, Union, get_args, get_origin, get_type_hints, is_typeddict
 
 try:
     from typing import NotRequired
@@ -170,6 +159,7 @@ class DictMissingKeyException(Exception):
 
         """
         self.key = key
+        super().__init__(f"key: '{key}' is missing")
 
 
 class DictValueTypeMismatchException(Exception):
@@ -205,6 +195,15 @@ class DictValueTypeMismatchException(Exception):
         self.expected_type_name = (
             expected.__name__ if expected.__class__.__name__ == "type" else expected.__class__.__name__
         )
-        if expected == Union:
-            self.expected_type_name = "one of " + ", ".join([t.__class__.__name__ for t in expected.__args__])
+        origin = get_origin(expected)
+        if origin is Union:
+            self.expected_type_name = "one of " + ", ".join(
+                [a.__name__ if hasattr(a, "__name__") else str(a) for a in get_args(expected)]
+            )
+        elif hasattr(expected, "__name__"):
+            self.expected_type_name = expected.__name__
+        else:
+            self.expected_type_name = str(expected)
+
         self.actual_type_name = actual.__name__ if actual.__class__.__name__ == "type" else actual.__class__.__name__
+        super().__init__(f"key: '{key}' requires type '{self.expected_type_name}' but got '{self.actual_type_name}'")

@@ -166,13 +166,14 @@ class TestValidateTypedDict(unittest.TestCase):
         ),
     ]
 
-    failure_params_list: list[tuple[Param, Type[Exception]]] = [
+    failure_params_list: list[tuple[Param, Type[Exception], tuple[str, ...]]] = [
         (
             (
                 {},
                 dict[str, Any],  # must be a TypeDict
             ),
             ValueError,
+            ("t must be a type object of TypedDict.",),
         ),
         (
             (
@@ -180,6 +181,7 @@ class TestValidateTypedDict(unittest.TestCase):
                 BasicTypedDict,
             ),
             DictMissingKeyException,
+            ("key: 'b' is missing",),
         ),
         (
             (
@@ -187,10 +189,12 @@ class TestValidateTypedDict(unittest.TestCase):
                 BasicTypedDict,
             ),
             DictValueTypeMismatchException,
+            ("key: 'b' requires type 'bool' but got 'str'",),
         ),
         (
             ({"d": {"s": 1}}, HasForwardRefTypedDict),
             DictValueTypeMismatchException,
+            ("key: 's' requires type 'str' but got 'int'",),
         ),
         (
             (
@@ -203,6 +207,7 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasListValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            ("key: 'l' requires type 'str' but got 'int'",),
         ),
         (
             (
@@ -215,6 +220,10 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasListValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            (
+                "key: 'l_union' requires type 'str' but got 'bool'",
+                "key: 'l_union' requires type 'int' but got 'bool'",
+            ),
         ),
         (
             (
@@ -227,6 +236,7 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasDictValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            ("key: 'd' requires type 'str' but got 'int'",),
         ),
         (
             (
@@ -239,6 +249,10 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasDictValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            (
+                "key: 'd_union' requires type 'str' but got 'bool'",
+                "key: 'd_union' requires type 'int' but got 'bool'",
+            ),
         ),
         (
             (
@@ -246,6 +260,7 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasTypedDictValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            ("key: 'b' requires type 'bool' but got 'str'",),
         ),
         (
             (
@@ -258,6 +273,10 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasUnionValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            (
+                "key: 'u' requires type 'str' but got 'bool'",
+                "key: 'u' requires type 'int' but got 'bool'",
+            ),
         ),
         (
             (
@@ -270,6 +289,10 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasUnionValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            (
+                "key: 'o' requires type 'str' but got 'bool'",
+                "key: 'o' requires type 'NoneType' but got 'bool'",
+            ),
         ),
         (
             (
@@ -282,6 +305,11 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasUnionValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            (
+                "key: 'o_list' requires type 'NoneType' but got 'bool'",
+                "key: 'o_list' requires type 'GenericAlias' but got 'bool'",
+                "key: 'o_list' requires type 'list' but got 'bool'",
+            ),
         ),
         (
             (
@@ -294,6 +322,11 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasUnionValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            (
+                "key: 'o_dict' requires type 'GenericAlias' but got 'bool'",
+                "key: 'o_dict' requires type 'dict' but got 'bool'",
+                "key: 'o_dict' requires type 'NoneType' but got 'bool'",
+            ),
         ),
         (
             (
@@ -306,6 +339,10 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasUnionValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            (
+                "key: 'o_list' requires type 'NoneType' but got 'list'",
+                "key: 'o_list' requires type 'str' but got 'int'",
+            ),
         ),
         (
             (
@@ -318,6 +355,10 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasUnionValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            (
+                "key: 'o_dict' requires type 'str' but got 'int'",
+                "key: 'o_dict' requires type 'NoneType' but got 'dict'",
+            ),
         ),
         (
             (
@@ -325,6 +366,10 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasLiteralValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            (
+                "key: 'l' requires type '_LiteralGenericAlias' but got 'str'",
+                "key: 'l' requires type 'Literal' but got 'str'",
+            ),
         ),
         (
             (
@@ -332,6 +377,10 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasLiteralValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            (
+                "key: 'l' requires type '_LiteralGenericAlias' but got 'str'",
+                "key: 'l' requires type 'Literal' but got 'str'",
+            ),
         ),
         (
             (
@@ -339,6 +388,10 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasLiteralValueTypedDict,
             ),
             DictValueTypeMismatchException,
+            (
+                "key: 'l' requires type '_LiteralGenericAlias' but got 'int'",
+                "key: 'l' requires type 'Literal' but got 'int'",
+            ),
         ),
         # Union with TypedDicts failure tests
         (
@@ -347,6 +400,10 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasUnionWithTypedDictsTypedDict,
             ),
             DictMissingKeyException,
+            (
+                "key: 'age' is missing",
+                "key: 'employees' is missing",
+            ),
         ),
         (
             (
@@ -354,6 +411,7 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasUnionWithTypedDictsTypedDict,
             ),
             DictValueTypeMismatchException,
+            ("key: 'age' requires type 'int' but got 'str'",),
         ),
         (
             (
@@ -361,6 +419,7 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasUnionWithTypedDictsTypedDict,
             ),
             DictValueTypeMismatchException,
+            ("key: 'name' requires type 'str' but got 'int'",),
         ),
         (
             (
@@ -368,6 +427,7 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasUnionWithTypedDictsTypedDict,
             ),
             DictValueTypeMismatchException,
+            ("key: 'employees' requires type 'int' but got 'str'",),
         ),
         (
             (
@@ -375,6 +435,7 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasUnionWithTypedDictsTypedDict,
             ),
             DictMissingKeyException,
+            ("key: 'name' is missing",),
         ),
         (
             (
@@ -382,6 +443,7 @@ class TestValidateTypedDict(unittest.TestCase):
                 HasNotRequiredTypedDict,
             ),
             DictValueTypeMismatchException,
+            ("key: 's' requires type 'str' but got 'int'",),
         ),
     ]
 
@@ -398,13 +460,14 @@ class TestValidateTypedDict(unittest.TestCase):
                 self.assertEqual(is_valid, True, success_params)
 
     def test_failure(self):
-        for failure_params, error in self.failure_params_list:
+        for failure_params, error, expected_messages in self.failure_params_list:
             with self.subTest():
-                with self.assertRaises(error, msg=failure_params):
+                with self.assertRaises(error, msg=failure_params) as ctx:
                     validate_typeddict(*failure_params)
+                self.assertIn(str(ctx.exception), expected_messages)
 
     def test_failure_with_silent(self):
-        for failure_params, error in self.failure_params_list:
+        for failure_params, error, _ in self.failure_params_list:
             with self.subTest():
                 if error is ValueError:
                     continue
