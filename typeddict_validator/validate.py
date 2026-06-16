@@ -1,9 +1,25 @@
-from typing import Any, Literal, Type, TypeGuard, TypeVar, Union, get_args, get_origin, get_type_hints, is_typeddict
+from typing import Any, Literal, Type, TypeGuard, TypeVar, Union, get_args, get_origin, get_type_hints
+
+try:
+    from typing_extensions import is_typeddict
+except ImportError:
+    from typing import is_typeddict
 
 try:
     from typing import NotRequired
 except ImportError:
-    from typing_extensions import NotRequired
+    try:
+        from typing_extensions import NotRequired
+    except ImportError:
+        NotRequired = None  # type: ignore[assignment]
+
+try:
+    from typing import Never
+except ImportError:
+    try:
+        from typing_extensions import Never
+    except ImportError:
+        Never = None  # type: ignore[assignment]
 
 
 T = TypeVar("T")
@@ -13,11 +29,11 @@ def _is_not_required(vt):
     """Check if a type annotation is NotRequired."""
     # Method 1: Direct origin check
     origin = get_origin(vt)
-    if origin is NotRequired:
+    if NotRequired is not None and origin is NotRequired:
         return True
 
     # Method 2: Check __origin__ attribute directly
-    if hasattr(vt, "__origin__") and vt.__origin__ is NotRequired:
+    if NotRequired is not None and hasattr(vt, "__origin__") and vt.__origin__ is NotRequired:
         return True
 
     # Method 3: Check type representation (fallback for edge cases)
@@ -25,6 +41,20 @@ def _is_not_required(vt):
     if type_str.startswith("typing.NotRequired[") or type_str.startswith("typing_extensions.NotRequired["):
         return True
 
+    return False
+
+
+def _is_closed_typeddict(t) -> bool:
+    """Check if a TypedDict is closed (does not allow extra keys)."""
+    # closed=True case (typing_extensions >= 4.10.0)
+    if getattr(t, "__closed__", None) is True:
+        return True
+    # extra_items=Never case
+    extra_items = getattr(t, "__extra_items__", None)
+    if extra_items is not None and (
+        (Never is not None and extra_items is Never) or str(extra_items) in {"typing.Never", "typing_extensions.Never"}
+    ):
+        return True
     return False
 
 
@@ -69,7 +99,12 @@ def validate_typeddict(d: dict[str, Any], t: Type[T], *, silent: bool = False) -
                 vt = get_args(vt)[0]
 
             _validate_value(k=k, v=d[k], expected=vt)
-    except (DictMissingKeyException, DictValueTypeMismatchException) as e:
+        if _is_closed_typeddict(t):
+            defined_keys = t.__required_keys__ | t.__optional_keys__
+            for extra_key in d.keys():
+                if extra_key not in defined_keys:
+                    raise DictExtraKeyException(key=extra_key)
+    except (DictMissingKeyException, DictValueTypeMismatchException, DictExtraKeyException) as e:
         if silent:
             return False
         raise e
@@ -139,6 +174,27 @@ def _raise_if_mismatch(k: str, v: Any, expected: Any, actual: Any):
     if type_mismatch_error is not None:
         raise type_mismatch_error
     raise error
+
+
+class DictExtraKeyException(Exception):
+    """Indicates the dict object has extra keys not defined in given closed TypedDict.
+
+    Attributes:
+        key (str): the name of extra key.
+
+    """
+
+    key: str
+
+    def __init__(self, key: str) -> None:
+        """Initialize DictExtraKeyException with extra key.
+
+        Args:
+            key (str): the name of extra key.
+
+        """
+        self.key = key
+        super().__init__(f"key: '{key}' is not allowed in closed TypedDict")
 
 
 class DictMissingKeyException(Exception):
