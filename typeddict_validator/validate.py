@@ -50,7 +50,10 @@ def _is_closed_typeddict(t) -> bool:
     if getattr(t, "__closed__", None) is True:
         return True
     # extra_items=Never case
-    if Never is not None and getattr(t, "__extra_items__", None) is Never:
+    extra_items = getattr(t, "__extra_items__", None)
+    if extra_items is not None and (
+        (Never is not None and extra_items is Never) or str(extra_items) in {"typing.Never", "typing_extensions.Never"}
+    ):
         return True
     return False
 
