@@ -32,7 +32,8 @@ jobs:
       url: https://pypi.org/p/typeddict-validator
     permissions:
       id-token: write
-    steps:
+      actions: read
+      contents: read
       - name: Download dist artifacts
         uses: actions/download-artifact@v4
         with:
