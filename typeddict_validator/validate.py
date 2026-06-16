@@ -101,9 +101,9 @@ def validate_typeddict(d: dict[str, Any], t: Type[T], *, silent: bool = False) -
             _validate_value(k=k, v=d[k], expected=vt)
         if _is_closed_typeddict(t):
             defined_keys = t.__required_keys__ | t.__optional_keys__
-            for k in d.keys():
-                if k not in defined_keys:
-                    raise DictExtraKeyException(key=k)
+            for extra_key in d.keys():
+                if extra_key not in defined_keys:
+                    raise DictExtraKeyException(key=extra_key)
     except (DictMissingKeyException, DictValueTypeMismatchException, DictExtraKeyException) as e:
         if silent:
             return False
