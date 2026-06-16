@@ -2,6 +2,7 @@ import unittest
 from typing import Any, Literal, Optional, Type, TypedDict, Union
 
 from .validate import (
+    DictExtraKeyException,
     DictMissingKeyException,
     DictValueTypeMismatchException,
     validate_typeddict,
@@ -10,7 +11,10 @@ from .validate import (
 try:
     from typing import NotRequired
 except ImportError:
-    from typing_extensions import NotRequired
+    try:
+        from typing_extensions import NotRequired
+    except ImportError:
+        NotRequired = None  # type: ignore[assignment]
 
 
 class BasicTypedDict(TypedDict):
@@ -71,8 +75,12 @@ class HasUnionWithTypedDictsTypedDict(TypedDict):
     backup: Optional[Union[PersonTypedDict, CompanyTypedDict]]
 
 
-class HasNotRequiredTypedDict(TypedDict):
-    s: NotRequired[str]
+HasNotRequiredTypedDict = None
+
+if NotRequired is not None:
+
+    class HasNotRequiredTypedDict(TypedDict):  # type: ignore[no-redef]
+        s: NotRequired[str]
 
 
 class TestValidateTypedDict(unittest.TestCase):
@@ -156,13 +164,10 @@ class TestValidateTypedDict(unittest.TestCase):
             {"entity": {"name": "John", "age": 30}, "backup": {"name": "ACME Corp", "employees": 100}},
             HasUnionWithTypedDictsTypedDict,
         ),
-        (
-            {},
-            HasNotRequiredTypedDict,
-        ),
-        (
-            {"s": "a"},
-            HasNotRequiredTypedDict,
+        *(
+            [({}, HasNotRequiredTypedDict), ({"s": "a"}, HasNotRequiredTypedDict)]
+            if HasNotRequiredTypedDict is not None
+            else []
         ),
     ]
 
@@ -437,13 +442,16 @@ class TestValidateTypedDict(unittest.TestCase):
             DictMissingKeyException,
             ("key: 'name' is missing",),
         ),
-        (
-            (
-                {"s": 0},
-                HasNotRequiredTypedDict,
-            ),
-            DictValueTypeMismatchException,
-            ("key: 's' requires type 'str' but got 'int'",),
+        *(
+            [
+                (
+                    ({"s": 0}, HasNotRequiredTypedDict),
+                    DictValueTypeMismatchException,
+                    ("key: 's' requires type 'str' but got 'int'",),
+                )
+            ]
+            if HasNotRequiredTypedDict is not None
+            else []
         ),
     ]
 
@@ -473,3 +481,77 @@ class TestValidateTypedDict(unittest.TestCase):
                     continue
                 is_valid = validate_typeddict(*failure_params, silent=True)
                 self.assertEqual(is_valid, False, failure_params)
+
+
+# Closed TypedDict support detection
+_CLOSED_TYPEDDICT_SUPPORTED = False
+_closed_success_params: list[tuple[dict, Any]] = []
+_closed_failure_params: list[tuple[tuple[dict, Any], tuple[str, ...]]] = []
+try:
+    from typing_extensions import TypedDict as _ExtTypedDict
+
+    try:
+        from typing import Never as _Never
+    except ImportError:
+        from typing_extensions import Never as _Never
+
+    _ClosedTypedDict = _ExtTypedDict("_ClosedTypedDict", {"s": str}, closed=True)
+    _ClosedWithNotRequiredTypedDict = _ExtTypedDict(
+        "_ClosedWithNotRequiredTypedDict",
+        {"s": str, "opt": NotRequired[str]},
+        closed=True,
+    )
+    _ExtraItemsNeverTypedDict = _ExtTypedDict("_ExtraItemsNeverTypedDict", {"s": str}, extra_items=_Never)
+
+    _closed_success_params = [
+        ({"s": "hello"}, _ClosedTypedDict),
+        ({"s": "hello"}, _ClosedWithNotRequiredTypedDict),
+        ({"s": "hello", "opt": "world"}, _ClosedWithNotRequiredTypedDict),
+        ({"s": "hello"}, _ExtraItemsNeverTypedDict),
+    ]
+    _closed_failure_params = [
+        (
+            ({"s": "hello", "extra": "world"}, _ClosedTypedDict),
+            ("key: 'extra' is not allowed in closed TypedDict",),
+        ),
+        (
+            ({"s": "hello", "extra": "world"}, _ExtraItemsNeverTypedDict),
+            ("key: 'extra' is not allowed in closed TypedDict",),
+        ),
+    ]
+    _CLOSED_TYPEDDICT_SUPPORTED = True
+except (ImportError, TypeError):
+    pass
+
+
+class TestClosedTypedDict(unittest.TestCase):
+    Param = tuple[dict, Any]
+
+    success_params_list: list[Param] = _closed_success_params
+    failure_params_list: list[tuple[Param, tuple[str, ...]]] = _closed_failure_params
+
+    @unittest.skipUnless(_CLOSED_TYPEDDICT_SUPPORTED, "typing_extensions with closed TypedDict not available")
+    def test_success(self):
+        for success_params in self.success_params_list:
+            with self.subTest():
+                self.assertTrue(validate_typeddict(*success_params))
+
+    @unittest.skipUnless(_CLOSED_TYPEDDICT_SUPPORTED, "typing_extensions with closed TypedDict not available")
+    def test_success_with_silent(self):
+        for success_params in self.success_params_list:
+            with self.subTest():
+                self.assertTrue(validate_typeddict(*success_params, silent=True))
+
+    @unittest.skipUnless(_CLOSED_TYPEDDICT_SUPPORTED, "typing_extensions with closed TypedDict not available")
+    def test_failure(self):
+        for failure_params, expected_messages in self.failure_params_list:
+            with self.subTest():
+                with self.assertRaises(DictExtraKeyException) as ctx:
+                    validate_typeddict(*failure_params)
+                self.assertIn(str(ctx.exception), expected_messages)
+
+    @unittest.skipUnless(_CLOSED_TYPEDDICT_SUPPORTED, "typing_extensions with closed TypedDict not available")
+    def test_failure_with_silent(self):
+        for failure_params, _ in self.failure_params_list:
+            with self.subTest():
+                self.assertFalse(validate_typeddict(*failure_params, silent=True))
